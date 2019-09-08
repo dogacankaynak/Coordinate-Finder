@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Reverse Geocoding</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        margin-left: -180px;
+        width: 350px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+      }
+      #latlng {
+        width: 225px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="floating-panel">
+      <input id="latlng" type="text" value="40.714224,-73.961452">
+      <input id="submit" type="button" value="Reverse Geocode">
+	  <button onclick="getLocation()">Nearest City</button>
+    </div>
+    <div id="map"></div>
+	<script>
+var x = document.getElementById("demo");
+
+//finds current location by browser properties(ip address)
+function getLocation() {
+if (navigator.geolocation) {
+navigator.geolocation.getCurrentPosition(showPosition);
+} else { 
+x.innerHTML = "Geolocation is not supported by this browser.";
+}
+}
+
+function showPosition(position) {
+//getting coordinates into lng
+var lng = position.coords.latitude + "," + position.coords.longitude;
+var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 8,
+          center: {lat: 40.731, lng: -73.997}
+        });
+        var geocoder = new google.maps.Geocoder;
+        var infowindow = new google.maps.InfoWindow;
+		//calling nearest city
+geocodeLatLng2(geocoder, map, infowindow,lng);
+}
+	
+      function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 8,
+          center: {lat: 40.731, lng: -73.997}
+        });
+		//gwtting LOCATION info from google apis
+        var geocoder = new google.maps.Geocoder;
+        var infowindow = new google.maps.InfoWindow;
+        //getting elevation info from google apis
+		var elevator = new google.maps.ElevationService;
+		var infowindow = new google.maps.InfoWindow({map: map});
+
+		//sending coordinates into function by event listener
+        document.getElementById('submit').addEventListener('click', function() {
+          geocodeLatLng(geocoder, map, infowindow);
+        });
+		//event listener for elevation when you left-click
+		map.addListener('click', function(event) {
+          displayLocationElevation(event.latLng, elevator, infowindow);
+        });
+      }
+	  //elevation function
+	  function displayLocationElevation(location, elevator, infowindow) {
+        // Initiate the location request
+        elevator.getElevationForLocations({
+          'locations': [location]
+        }, function(results, status) {
+          infowindow.setPosition(location);
+          if (status === 'OK') {
+            // Retrieve the first result
+            if (results[0]) {
+              // Open the infowindow indicating the elevation at the clicked position.
+			  var rakim = +6371000 + +results[0].elevation;
+              infowindow.setContent('The elevation at this point <br>is ' +
+                  rakim + ' meters.');
+            } else {
+              infowindow.setContent('No results found');
+            }
+          } else {
+            infowindow.setContent('Elevation service failed due to: ' + status);
+          }
+        });
+      }
+	  //nearest city function for current location by ip address
+	  
+function geocodeLatLng2(geocoder, map, infowindow,lng) {
+var input = lng;
+var latlngStr = input.split(',', 2);
+var latlng = {lat: parseFloat(latlngStr[0]), lng: parseFloat(latlngStr[1])};
+geocoder.geocode({'location': latlng}, function(results, status) {
+if (status === 'OK') {
+if (results[0]) {
+map.setZoom(11);
+var marker = new google.maps.Marker({
+position: latlng,
+map: map
+});
+infowindow.setContent(results[0].formatted_address);
+infowindow.open(map, marker);
+} else {
+window.alert('No results found');
+}
+} else {
+window.alert('Geocoder failed due to: ' + status);
+}
+});
+}
+window.oncontextmenu = function () {
+  alert('To see the elevation left click not right!');
+}
+
+//for reverse geocoding button 
+      function geocodeLatLng(geocoder, map, infowindow) {
+        var input = document.getElementById('latlng').value;
+        var latlngStr = input.split(',', 2);
+        var latlng = {lat: parseFloat(latlngStr[0]), lng: parseFloat(latlngStr[1])};
+        geocoder.geocode({'location': latlng}, function(results, status) {
+          if (status === 'OK') {
+            if (results[0]) {
+              map.setZoom(11);
+              var marker = new google.maps.Marker({
+                position: latlng,
+                map: map
+              });
+              infowindow.setContent(results[0].formatted_address);
+              infowindow.open(map, marker);
+            } else {
+              window.alert('No results found');
+            }
+          } else {
+            window.alert('Geocoder failed due to: ' + status);
+          }
+        });
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCexF9imRTW7HLP-7C5Lnnat487pYQCuzY&callback=initMap">
+    </script>
+  </body>
+</html>
